@@ -6,6 +6,7 @@ import {
   FaSyncAlt,
   FaTrash,
   FaEdit,
+  FaPlus,
 } from "react-icons/fa";
 import Badge from "../../components/ui/badge/Badge";
 import {
@@ -15,17 +16,22 @@ import {
   TableHeader,
   TableRow,
 } from "../../components/ui/table";
-import { getAllCategory, deleteCategory } from "../../helper/api";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
+import { deleteUser, getAllUser } from "../../helper/api";
 
-interface CategoryInfo {
+// 🧩 Interface dữ liệu user
+interface User {
   id: number;
-  description: string;
-  name: string;
+  fullName: string;
+  username: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  role: string;
   status: number;
 }
 
-// 🏷️ Trạng thái hiển thị
+// 🏷️ Hàm hiển thị trạng thái
 const getStatusLabel = (status: number) => {
   switch (status) {
     case 1:
@@ -49,28 +55,28 @@ const getStatusLabel = (status: number) => {
   }
 };
 
-export default function CategoryTable() {
-  const [data, setData] = useState<CategoryInfo[]>([]);
+export default function UserTable() {
+  const [data, setData] = useState<User[]>([]);
   const [searchName, setSearchName] = useState("");
-  const [searchCode, setSearchCode] = useState("");
+  const [searchUsername, setSearchUsername] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
   const navigate = useNavigate();
 
-  // 🧩 Gọi API
+  // 🔹 Gọi API lấy danh sách user
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await getAllCategory();
+      const res = await getAllUser();
       const result = Array.isArray(res.data) ? res.data : res.data?.data ?? [];
       setData(result);
     } catch (err) {
       console.error("❌ Lỗi khi tải dữ liệu:", err);
-      setError("Không thể tải dữ liệu, vui lòng thử lại.");
+      setError("Không thể tải danh sách người dùng.");
     } finally {
       setLoading(false);
     }
@@ -80,13 +86,11 @@ export default function CategoryTable() {
     fetchData();
   }, []);
 
-  // 🔍 Lọc dữ liệu (check null/undefined trước khi toLowerCase)
+  // 🔍 Lọc dữ liệu theo tên, username, trạng thái
   const filteredData = data.filter(
     (item) =>
-      (item.name ?? "").toLowerCase().includes(searchName.toLowerCase()) &&
-      (item.description ?? "")
-        .toLowerCase()
-        .includes(searchCode.toLowerCase()) &&
+      item.fullName.toLowerCase().includes(searchName.toLowerCase()) &&
+      item.username.toLowerCase().includes(searchUsername.toLowerCase()) &&
       (filterStatus === "" || item.status.toString() === filterStatus)
   );
 
@@ -97,16 +101,16 @@ export default function CategoryTable() {
     currentPage * itemsPerPage
   );
 
-  // 🗑️ Xóa thông tin
+  // 🗑️ Xử lý xóa user
   const handleDelete = async (id: number) => {
-    if (!confirm("Bạn có chắc muốn xóa category này?")) return;
+    if (!confirm("Bạn có chắc muốn xóa người dùng này?")) return;
     try {
       setLoading(true);
-      await deleteCategory(id);
-      alert("Xóa thành công!");
+      await deleteUser(id);
+      alert("Xóa người dùng thành công!");
       fetchData();
-    } catch {
-      alert("Xóa thất bại!");
+    } catch (err) {
+      alert("Xóa thất bại, vui lòng thử lại!");
     } finally {
       setLoading(false);
     }
@@ -114,14 +118,16 @@ export default function CategoryTable() {
 
   const resetFilters = () => {
     setSearchName("");
-    setSearchCode("");
+    setSearchUsername("");
     setFilterStatus("");
+    fetchData();
   };
 
   return (
     <div className="space-y-1">
       {/* 🔎 Bộ lọc */}
       <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        {/* Tìm theo tên */}
         <div className="relative">
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -132,16 +138,20 @@ export default function CategoryTable() {
             className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 pl-10 pr-3 py-2 rounded-lg w-56 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
+
+        {/* Tìm theo username */}
         <div className="relative">
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Tìm theo mã..."
-            value={searchCode}
-            onChange={(e) => setSearchCode(e.target.value)}
-            className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 pl-10 pr-3 py-2 rounded-lg w-44 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Tìm theo username..."
+            value={searchUsername}
+            onChange={(e) => setSearchUsername(e.target.value)}
+            className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 pl-10 pr-3 py-2 rounded-lg w-52 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
+
+        {/* Bộ lọc trạng thái */}
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
@@ -151,17 +161,21 @@ export default function CategoryTable() {
           <option value="1">Hoạt động</option>
           <option value="0">Tạm dừng</option>
         </select>
+
+        {/* Nút làm mới */}
         <button
           onClick={resetFilters}
           className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm transition"
         >
           <FaSyncAlt className="w-4 h-4" /> Làm mới
         </button>
+
+        {/* Nút thêm mới */}
         <button
-          onClick={() => navigate("/category/create")}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm transition"
+          onClick={() => navigate("/user/new")}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition"
         >
-          ➕ Tạo mới
+          <FaPlus className="w-4 h-4" /> Thêm mới
         </button>
       </div>
 
@@ -178,45 +192,60 @@ export default function CategoryTable() {
             <Table>
               <TableHeader className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <TableRow>
-                  {["Tên", "Miêu tả", "Trạng thái", "Hành động"].map(
-                    (header) => (
-                      <TableCell
-                        key={header}
-                        isHeader
-                        className="px-5 py-3 font-semibold text-gray-700 dark:text-gray-300 text-center"
-                      >
-                        {header}
-                      </TableCell>
-                    )
-                  )}
+                  {[
+                    "ID",
+                    "Họ tên",
+                    "Username",
+                    "Email",
+                    "Số điện thoại",
+                    "Vai trò",
+                    "Trạng thái",
+                    "Hành động",
+                  ].map((header) => (
+                    <TableCell
+                      key={header}
+                      isHeader
+                      className="px-5 py-3 font-semibold text-gray-700 dark:text-gray-300"
+                    >
+                      {header}
+                    </TableCell>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {currentData.length > 0 ? (
-                  currentData.map((item) => (
+                  currentData.map((user) => (
                     <TableRow
-                      key={item.id}
+                      key={user.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                     >
-                      <TableCell className="px-5 py-4 text-center">
-                        {item.name}
+                      <TableCell className="px-5 py-4">{user.id}</TableCell>
+                      <TableCell className="px-5 py-4 font-medium">
+                        {user.fullName}
                       </TableCell>
-                      <TableCell className="px-5 py-4 text-center">
-                        {item.description}
+                      <TableCell className="px-5 py-4">
+                        {user.username}
                       </TableCell>
-                      <TableCell className="px-5 py-4 text-center">
-                        {getStatusLabel(item.status)}
+                      <TableCell className="px-5 py-4">{user.email}</TableCell>
+                      <TableCell className="px-5 py-4">
+                        {user.phone || "-"}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 uppercase">
+                        {user.role}
+                      </TableCell>
+                      <TableCell className="px-5 py-4">
+                        {getStatusLabel(user.status)}
                       </TableCell>
                       <TableCell className="px-5 py-4 flex justify-center gap-3">
                         <button
-                          onClick={() => navigate(`/category/${item.id}`)}
+                          onClick={() => navigate(`/user/${user.id}`)}
                           className="text-blue-500 hover:text-blue-700"
                           title="Sửa"
                         >
                           <FaEdit />
                         </button>
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => handleDelete(user.id)}
                           className="text-red-500 hover:text-red-700"
                           title="Xóa"
                         >
@@ -228,7 +257,7 @@ export default function CategoryTable() {
                 ) : (
                   <TableRow>
                     <TableCell className="text-center py-6 text-gray-500 italic">
-                      Không có dữ liệu
+                      Không có người dùng nào
                     </TableCell>
                   </TableRow>
                 )}

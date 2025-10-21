@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FaSave, FaArrowLeft, FaPlus } from "react-icons/fa";
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
-import PageMeta from "../../components/common/PageMeta";
+import { FaSave, FaArrowLeft } from "react-icons/fa";
 import { getBranchById, processBranch } from "../../helper/api";
 
 interface BranchFormData {
@@ -91,63 +89,46 @@ export default function BranchForm() {
   };
 
   return (
-    <div className="p-6">
-      <PageMeta
-        title={isEdit ? "Sửa chi nhánh" : "Thêm chi nhánh"}
-        description="Trang thêm hoặc chỉnh sửa chi nhánh"
-      />
-      <PageBreadcrumb pageTitle={isEdit ? "Sửa chi nhánh" : "Thêm chi nhánh"} />
+    <div className="p-6 bg-white shadow rounded-lg">
+      <h2 className="text-2xl font-semibold mb-4">
+        {isEdit ? "📝 Cập nhật thông tin" : "➕ Thêm thông tin mới"}
+      </h2>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          {/* Tên chi nhánh */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Tên chi nhánh
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              placeholder="Nhập tên chi nhánh"
+              disabled={loading}
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 space-y-5 max-w-xl mx-auto"
-      >
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2 mb-4">
-          {isEdit ? (
-            <>
-              <FaSave className="text-blue-500" /> Cập nhật chi nhánh
-            </>
-          ) : (
-            <>
-              <FaPlus className="text-green-500" /> Thêm chi nhánh mới
-            </>
-          )}
-        </h2>
-
-        {/* Tên chi nhánh */}
-        <div>
-          <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            Tên chi nhánh
-          </label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            placeholder="Nhập tên chi nhánh"
-            disabled={loading}
-            className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          {/* Quốc gia */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Quốc gia
+            </label>
+            <input
+              type="text"
+              name="country"
+              value={formData.country}
+              onChange={handleChange}
+              required
+              placeholder="Nhập quốc gia"
+              disabled={loading}
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
-
-        {/* Quốc gia */}
-        <div>
-          <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            Quốc gia
-          </label>
-          <input
-            type="text"
-            name="country"
-            value={formData.country}
-            onChange={handleChange}
-            required
-            placeholder="Nhập quốc gia"
-            disabled={loading}
-            className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
         {/* Trạng thái */}
         <div>
           <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">

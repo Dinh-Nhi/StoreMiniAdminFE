@@ -121,7 +121,7 @@ export default function InforWebTable() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-1">
       {/* 🔎 Bộ lọc */}
       <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="relative">

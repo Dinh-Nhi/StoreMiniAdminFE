@@ -57,4 +57,29 @@ export const getCategoryById = (id: number) => api.get(`/admin/category/${id}`);
 export const processCategory = (data: any) =>
   api.post("/admin/category/process", data);
 
+// ----------------------------
+// 🔹 USER API
+// ----------------------------
+export const getAllUser = () => api.get("/admin/user/getAll");
+export const updateUser = (data: any) => api.post("/admin/user/save", data);
+export const deleteUser = (id: number) =>
+  api.delete(`/admin/user/delete/${id}`);
+export const getUserById = (id: number) => api.get(`/admin/user/${id}`);
+export const processUser = (data: any) => api.post("/admin/user/process", data);
+
+export const uploadMedia = (fileKey = "create", formData: FormData) =>
+  api.post(`/media/upload/${fileKey}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const uploadMediaList = (fileKey = "create", formData: FormData) =>
+  api.post(`/media/uploadList/${fileKey}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const getMediaById = (id: string) =>
+  api.get(`/media/view/${id}`, {
+    responseType: "blob",
+  });
+
 export { api };

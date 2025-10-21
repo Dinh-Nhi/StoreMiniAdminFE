@@ -23,7 +23,7 @@ export default function CategoryForm() {
 
   // 🧩 Nếu có id và id !== 'create' thì gọi API load dữ liệu
   useEffect(() => {
-    if (id && id !== "create") {
+    if (id && id !== "  `1  456") {
       const fetchData = async () => {
         try {
           setLoading(true);
@@ -63,8 +63,8 @@ export default function CategoryForm() {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto bg-white dark:bg-gray-900 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
+    <div className="p-6 bg-white shadow rounded-lg">
+      <h2 className="text-2xl font-semibold mb-4">
         {id && id !== "create" ? "Cập nhật Category" : "Thêm mới Category"}
       </h2>
 
