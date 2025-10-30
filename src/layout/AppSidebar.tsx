@@ -4,9 +4,11 @@ import {
   BoxCubeIcon,
   ChevronDownIcon,
   DocsIcon,
+  TaskIcon,
   GridIcon,
   HorizontaLDots,
   PageIcon,
+  
   UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
@@ -43,6 +45,11 @@ const navItems: NavItem[] = [
     icon: <BoxCubeIcon />,
     name: "Quản lý loại sản phẩm",
     path: "/category",
+  },
+  {
+    icon: <TaskIcon  />,
+    name: "Quản lý sản phẩm",
+    path: "/product",
   },
 ];
 

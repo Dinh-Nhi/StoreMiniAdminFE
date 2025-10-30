@@ -15,6 +15,8 @@ import CategoryForm from "./pages/Category/CategoryForm";
 import InforWebForm from "./pages/InforWeb/InforWebForm";
 import UserTable from "./pages/user/UserTable";
 import UserForm from "./pages/user/UserForm";
+import ProductsForm from "./pages/Products/ProductsForm";
+import ProductsTable from "./pages/Products/ProductsTable";
 
 export default function App() {
   return (
@@ -38,6 +40,9 @@ export default function App() {
 
             <Route path="/user" element={<UserTable />} />
             <Route path="/user/:id" element={<UserForm />} />
+
+            <Route path="/product" element={<ProductsTable />} />
+            <Route path="/product/:id" element={<ProductsForm />} />
           </Route>
         </Route>
 

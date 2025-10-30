@@ -67,6 +67,18 @@ export const deleteUser = (id: number) =>
 export const getUserById = (id: number) => api.get(`/admin/user/${id}`);
 export const processUser = (data: any) => api.post("/admin/user/process", data);
 
+// ----------------------------
+// 🔹 PRODUCT API
+// ----------------------------
+export const getAllProductsInfo = () => api.get("/admin/product/getAll");
+export const deleteProductsInfo = (id: number) =>
+  api.delete(`/admin/product/delete/${id}`);
+export const getProductById = (id: number) =>
+  api.get(`/admin/product/${id}`);
+export const processProductInfo = (data: any) =>
+  api.post("/admin/product/process", data);
+
+
 export const uploadMedia = (fileKey = "create", formData: FormData) =>
   api.post(`/media/upload/${fileKey}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
