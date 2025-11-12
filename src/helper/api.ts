@@ -61,12 +61,22 @@ export const processCategory = (data: any) =>
 // 🔹 USER API
 // ----------------------------
 export const getAllUser = () => api.get("/admin/user/getAll");
-export const updateUser = (data: any) => api.post("/admin/user/save", data);
 export const deleteUser = (id: number) =>
   api.delete(`/admin/user/delete/${id}`);
 export const getUserById = (id: number) => api.get(`/admin/user/${id}`);
 export const processUser = (data: any) => api.post("/admin/user/process", data);
 
+// ----------------------------
+// 🔹 ORDER API
+// ----------------------------
+export const getAllOrder = () => api.get("/admin/order/getAll");
+export const getOrderById = (id: number) => api.get(`/admin/order/${id}`);
+export const processOrder = (id: number, status: string) =>
+  api.post("/admin/order/process", { id, status });
+
+// ----------------------------
+// 🔹 MEDIA API
+// ----------------------------
 export const uploadMedia = (fileKey = "create", formData: FormData) =>
   api.post(`/media/upload/${fileKey}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },

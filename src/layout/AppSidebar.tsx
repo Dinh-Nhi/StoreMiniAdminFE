@@ -7,6 +7,7 @@ import {
   GridIcon,
   HorizontaLDots,
   PageIcon,
+  TaskIcon,
   UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
@@ -43,6 +44,11 @@ const navItems: NavItem[] = [
     icon: <BoxCubeIcon />,
     name: "Quản lý loại sản phẩm",
     path: "/category",
+  },
+  {
+    icon: <TaskIcon />,
+    name: "Quản lý đơn hàng",
+    path: "/order",
   },
 ];
 
