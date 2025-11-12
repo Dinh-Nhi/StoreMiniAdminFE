@@ -8,6 +8,7 @@ import {
   GridIcon,
   HorizontaLDots,
   PageIcon,
+  TaskIcon,
   
   UserCircleIcon,
 } from "../icons";
@@ -50,6 +51,11 @@ const navItems: NavItem[] = [
     icon: <TaskIcon  />,
     name: "Quản lý sản phẩm",
     path: "/product",
+  },
+  {
+    icon: <TaskIcon />,
+    name: "Quản lý đơn hàng",
+    path: "/order",
   },
 ];
 

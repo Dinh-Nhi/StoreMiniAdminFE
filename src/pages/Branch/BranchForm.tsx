@@ -98,7 +98,7 @@ export default function BranchForm() {
           {/* Tên chi nhánh */}
           <div>
             <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Tên chi nhánh
+              Tên thương hiệu
             </label>
             <input
               type="text"
@@ -106,7 +106,7 @@ export default function BranchForm() {
               value={formData.name}
               onChange={handleChange}
               required
-              placeholder="Nhập tên chi nhánh"
+              placeholder="Nhập tên thương hiệu"
               disabled={loading}
               className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />

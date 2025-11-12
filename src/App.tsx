@@ -17,6 +17,8 @@ import UserTable from "./pages/user/UserTable";
 import UserForm from "./pages/user/UserForm";
 import ProductsForm from "./pages/Products/ProductsForm";
 import ProductsTable from "./pages/Products/ProductsTable";
+import OrderTable from "./pages/Order/OrderTable";
+import OrderForm from "./pages/Order/OrderForm";
 
 export default function App() {
   return (
@@ -43,6 +45,9 @@ export default function App() {
 
             <Route path="/product" element={<ProductsTable />} />
             <Route path="/product/:id" element={<ProductsForm />} />
+
+            <Route path="/order" element={<OrderTable />} />
+            <Route path="/order/:id" element={<OrderForm />} />
           </Route>
         </Route>
 

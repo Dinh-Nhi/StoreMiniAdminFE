@@ -23,7 +23,7 @@ export default function CategoryForm() {
 
   // 🧩 Nếu có id và id !== 'create' thì gọi API load dữ liệu
   useEffect(() => {
-    if (id && id !== "  `1  456") {
+    if (id && id !== "create") {
       const fetchData = async () => {
         try {
           setLoading(true);
