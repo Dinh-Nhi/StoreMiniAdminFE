@@ -4,7 +4,6 @@ import {
   BoxCubeIcon,
   ChevronDownIcon,
   DocsIcon,
-  TaskIcon,
   GridIcon,
   HorizontaLDots,
   PageIcon,
