@@ -103,5 +103,13 @@ export const getMediaById = (id: string) =>
   api.get(`/media/view/${id}`, {
     responseType: "blob",
   });
+  export const getMediaByFileKey = (fileKey: string) =>
+    api.get(`/media/viewFileKey/${fileKey}`, { responseType: "blob" });
+  
+  export const getMediaMainByFileKey = (fileKey: string) =>
+    api.get(`/media/viewFileKeyForProduct/${fileKey}`, { responseType: "blob" });
+  
+  export const getMediaAllByFileKey = (fileKey: string) =>
+    api.get(`/media/viewAllFileKeyForProduct/${fileKey}`);
 
 export { api };

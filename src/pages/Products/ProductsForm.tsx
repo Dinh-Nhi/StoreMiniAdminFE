@@ -6,6 +6,7 @@ import {
   uploadMediaList,
   getAllCategory,
   getAllBranch,
+  getMediaAllByFileKey,
 } from "../../helper/api";
 import { FaArrowLeft, FaSave, FaPlus, FaTrash } from "react-icons/fa";
 
@@ -17,8 +18,8 @@ interface ProductSize {
 interface ProductVariant {
   color: string;
   price: number;
-  stock: number; // tổng stock sizes
-  sold: number;  // tổng số lượng đã bán
+  stock: number;
+  sold: number;
   available: boolean;
   sizes: ProductSize[];
 }
@@ -38,11 +39,10 @@ interface ProductForm {
   variants: ProductVariant[];
 }
 
-/** Kiểu cho file đã upload trên server */
 interface ExistingFile {
   id?: number;
-  fileName?: string;
-  url: string;
+  name?: string;
+  url: string; // base64
 }
 
 export default function ProductFormPage() {
@@ -62,11 +62,8 @@ export default function ProductFormPage() {
     fileKey: undefined,
   });
 
-  // previewUrls chứa chuỗi preview từ cả 2 nguồn (existing + new),
-  // nhưng để biết nguồn ta giữ 2 danh sách riêng: existingFiles & selectedFiles
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // files user vừa chọn (chưa upload)
-  const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([]); // files đã có trên server
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [existingFiles, setExistingFiles] = useState<ExistingFile[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -81,9 +78,10 @@ export default function ProductFormPage() {
       .catch(() => alert("Không thể tải danh mục hoặc thương hiệu!"));
   }, []);
 
-  // Load product details when editing
+  // Load product detail when editing
   useEffect(() => {
     if (!isEdit) return;
+
     (async () => {
       setLoading(true);
       try {
@@ -97,20 +95,17 @@ export default function ProductFormPage() {
           fileKey: data.fileKey ?? null,
         }));
 
-        // Nếu server trả về danh sách files, giữ chúng trong existingFiles và preview
-        if (data.files && Array.isArray(data.files)) {
-          const ex: ExistingFile[] = data.files.map((f: any) => ({
-            id: f.id,
-            fileName: f.fileName,
-            url: f.url,
-          }));
-          setExistingFiles(ex);
-          setPreviewUrls(ex.map((f) => f.url));
-        } else if (data.fileKey && data.fileUrls && Array.isArray(data.fileUrls)) {
-          // fallback: nếu API khác trả fileUrls
-          const ex: ExistingFile[] = data.fileUrls.map((u: string) => ({ url: u }));
-          setExistingFiles(ex);
-          setPreviewUrls(ex.map((f) => f.url));
+        if (data.fileKey) {
+          const mediaRes = await getMediaAllByFileKey(data.fileKey);
+
+          const files =
+            mediaRes.data?.map((item: any, idx: number) => ({
+              id: idx,
+              name: item.name ?? `image_${idx}.jpg`,
+              url: item.data, // <=== FIX: backend trả về đúng field "data"
+            })) ?? [];
+
+          setExistingFiles(files);
         }
       } catch (err) {
         console.error(err);
@@ -121,148 +116,72 @@ export default function ProductFormPage() {
     })();
   }, [id, isEdit]);
 
-  // Khi user chọn file mới: chỉ lưu File vào selectedFiles và tạo preview local
+  // handle new images
   const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
-    if (validFiles.length === 0) {
-      alert("Vui lòng chọn tệp hình ảnh hợp lệ!");
+    const validImages = Array.from(files).filter((f) =>
+      f.type.startsWith("image/")
+    );
+
+    if (validImages.length === 0) {
+      alert("Vui lòng chọn file ảnh hợp lệ!");
       return;
     }
 
-    // tạo object URLs cho preview
-    const newPreviews = validFiles.map((f) => URL.createObjectURL(f));
-    setPreviewUrls((prev) => [...prev, ...newPreviews]);
-    setSelectedFiles((prev) => [...prev, ...validFiles]);
-
-    // reset input để user có thể chọn cùng file lần nữa nếu muốn
-    e.currentTarget.value = "";
+    setSelectedFiles((prev) => [...prev, ...validImages]);
+    e.target.value = "";
   };
 
-  // Xóa một ảnh mới (chưa upload)
-  const removeNewPreview = (newIndex: number) => {
-    // previewUrls includes both existing and new; we need to find mapping.
-    // Simpler: reconstruct previewUrls from existingFiles + selectedFiles after removal.
-    setSelectedFiles((prev) => {
-      const updated = [...prev];
-      const removed = updated.splice(newIndex, 1);
-      // revoke object URL
-      removed.forEach((f) => {
-        // we created object URLs in handleFilesChange; find matching URL(s) to revoke:
-        // We cannot reliably get objectURL from File, so instead after state update we rebuild previewUrls below.
-      });
-      // rebuild previewUrls
-      setPreviewUrls(() => [
-        ...existingFiles.map((f) => f.url),
-        ...updated.map((f) => URL.createObjectURL(f)),
-      ]);
-      return updated;
-    });
+  const removeExistingImage = (index: number) => {
+    setExistingFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Xóa một ảnh existing (đã có trên server)
-  const removeExistingPreview = (existingIndex: number) => {
-    setExistingFiles((prev) => {
-      const updated = prev.filter((_, i) => i !== existingIndex);
-      setPreviewUrls(() => [...updated.map((f) => f.url), ...selectedFiles.map((f) => URL.createObjectURL(f))]);
-      return updated;
-    });
+  const removeNewImage = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Hỗ trợ generic remove bằng index trên tổng preview list: map index -> existing or new
   const removePreview = (globalIndex: number) => {
     const existingCount = existingFiles.length;
+
     if (globalIndex < existingCount) {
-      // remove from existing
-      removeExistingPreview(globalIndex);
+      removeExistingImage(globalIndex);
     } else {
-      // remove from new files: index in selectedFiles = globalIndex - existingCount
-      removeNewPreview(globalIndex - existingCount);
+      removeNewImage(globalIndex - existingCount);
     }
   };
 
-  // Clean up object URLs on unmount to avoid memory leak
-  useEffect(() => {
-    return () => {
-      // revoke all created object URLs from selectedFiles previews
-      // We don't have stored the object URLs separately, but we can try to revoke previewUrls (some will be remote URLs and revoke will fail silently)
-      previewUrls.forEach((u) => {
-        try {
-          URL.revokeObjectURL(u);
-        } catch (e) {
-          // ignore
-        }
-      });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Utility: convert existingFiles' urls -> File objects (via fetch) so we can upload them together
-  const convertExistingUrlsToFiles = async (): Promise<File[]> => {
-    const files: File[] = [];
-    for (const f of existingFiles) {
-      try {
-        // fetch the blob from URL (CORS needs to allow)
-        const resp = await fetch(f.url, { cache: "no-store" });
-        if (!resp.ok) {
-          console.warn("Không thể fetch file existing:", f.url);
-          continue;
-        }
-        const blob = await resp.blob();
-        const name = f.fileName || f.url.split("/").pop() || "file.jpg";
-        // Create a File (maintain image type if present)
-        const file = new File([blob], name, { type: blob.type || "image/jpeg" });
-        files.push(file);
-      } catch (err) {
-        console.warn("Lỗi khi convert existing url to file:", f.url, err);
-        // skip this file
-      }
-    }
-    return files;
-  };
-
-  // Submit form
+  // Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      const payload = isEdit ? { ...formData, id: Number(id) } : { ...formData, id: undefined };
+      const payload = isEdit
+        ? { ...formData, id: Number(id) }
+        : { ...formData, id: undefined };
 
-      // Build list of files to upload: include selectedFiles + existingFiles (converted)
-      const totalExisting = existingFiles.length;
-      const totalNew = selectedFiles.length;
+      const noImages =
+        existingFiles.length === 0 && selectedFiles.length === 0;
 
-      if (totalExisting + totalNew > 0) {
-        const formDataUpload = new FormData();
+      if (noImages) payload.fileKey = undefined;
 
-        // append newly selected files
-        selectedFiles.forEach((f) => {
-          formDataUpload.append("files", f);
-        });
+      // Upload new images
+      if (selectedFiles.length > 0) {
+        const fd = new FormData();
+        selectedFiles.forEach((f) => fd.append("files", f));
 
-        // convert existing remote urls to files and append them (so uploadMediaList receives full set)
-        // Note: this requires that existing file URLs are accessible (CORS). If not, alternative server-side merging is needed.
-        const converted = await convertExistingUrlsToFiles();
-        converted.forEach((f) => formDataUpload.append("files", f));
+        const uploadKey = formData.fileKey ?? "create";
+        const res = await uploadMediaList(uploadKey, fd);
 
-        // call upload API
-        const res = await uploadMediaList("create", formDataUpload);
-        const { fileKey } = res.data || {};
-        if (fileKey) {
-          payload.fileKey = fileKey;
-        } else {
-          // fallback: if response doesn't include fileKey, remove fileKey to avoid accidental overwrite
-          payload.fileKey = undefined;
+        if (res.data?.fileKey) {
+          payload.fileKey = res.data.fileKey;
         }
-      } else {
-        // no images — ensure we don't accidentally send old fileKey when user removed all images
-        payload.fileKey = undefined;
       }
 
-      // gọi API lưu product (processProductInfo)
       await processProductInfo(payload);
+
       alert(isEdit ? "Cập nhật thành công!" : "Thêm mới thành công!");
       navigate("/product");
     } catch (err) {
@@ -273,22 +192,26 @@ export default function ProductFormPage() {
     }
   };
 
-  // UI helpers để hiển thị preview với nút xóa
+  // render previews
   const renderPreviews = () => {
-    // previewUrls is maintained but to keep mapping accurate, reconstruct from existingFiles + selectedFiles
-    const existingPreviews = existingFiles.map((f) => f.url);
-    const newPreviews = selectedFiles.map((f) => URL.createObjectURL(f));
+    const newPreviewUrls = selectedFiles.map((f) => URL.createObjectURL(f));
+    const all = [...existingFiles.map((f) => f.url), ...newPreviewUrls];
 
-    // We must avoid creating duplicate objectURLs repeatedly for same files.
-    // For simplicity here, build previews from the two sources freshly:
-    const combined = [...existingPreviews, ...newPreviews];
-    return combined.map((url, idx) => (
-      <div key={idx} className="relative">
-        <img src={url} className="w-24 h-24 object-cover rounded border border-gray-200" alt={`preview-${idx}`} />
+    return all.map((url, idx) => (
+      <div
+        key={idx}
+        className="relative w-40 h-40 border bg-white rounded-lg shadow-sm flex items-center justify-center overflow-hidden"
+      >
+        <img
+          src={url}
+          className="w-full h-full object-contain"
+          alt={`preview-${idx}`}
+        />
+
         <button
           type="button"
           onClick={() => removePreview(idx)}
-          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
         >
           ✕
         </button>
@@ -296,26 +219,29 @@ export default function ProductFormPage() {
     ));
   };
 
-  // Rest of UI (form) — tương tự trước, chỉ chỉnh phần preview rendering và file input handler
   return (
     <div className="p-6 bg-white shadow rounded-lg">
-      <h2 className="text-2xl font-semibold mb-4">{isEdit ? "📝 Cập nhật sản phẩm" : "➕ Thêm sản phẩm mới"}</h2>
+      <h2 className="text-2xl font-semibold mb-4">
+        {isEdit ? "📝 Cập nhật sản phẩm" : "➕ Thêm sản phẩm mới"}
+      </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Tên + giá */}
+        {/* name & price */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block mb-1">Tên sản phẩm</label>
+            <label>Tên sản phẩm</label>
             <input
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               className="w-full border rounded px-3 py-2"
               required
             />
           </div>
 
           <div>
-            <label className="block mb-1">Giá cơ bản</label>
+            <label>Giá cơ bản</label>
             <input
               type="number"
               value={formData.basePrice}
@@ -331,10 +257,10 @@ export default function ProductFormPage() {
           </div>
         </div>
 
-        {/* Giảm giá + Hiển thị + Sản phẩm mới */}
+        {/* discount, show, new */}
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block mb-1">Giảm giá (%)</label>
+            <label>Giảm giá (%)</label>
             <input
               type="number"
               min={0}
@@ -354,7 +280,9 @@ export default function ProductFormPage() {
             <input
               type="checkbox"
               checked={formData.isShow}
-              onChange={(e) => setFormData({ ...formData, isShow: e.target.checked })}
+              onChange={(e) =>
+                setFormData({ ...formData, isShow: e.target.checked })
+              }
             />
             <label>Hiển thị</label>
           </div>
@@ -363,29 +291,38 @@ export default function ProductFormPage() {
             <input
               type="checkbox"
               checked={formData.isNew}
-              onChange={(e) => setFormData({ ...formData, isNew: e.target.checked })}
+              onChange={(e) =>
+                setFormData({ ...formData, isNew: e.target.checked })
+              }
             />
             <label>Sản phẩm mới</label>
           </div>
         </div>
 
-        {/* Mô tả */}
+        {/* description */}
         <div>
-          <label className="block mb-1">Mô tả</label>
+          <label>Mô tả</label>
           <textarea
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
             className="w-full border rounded px-3 py-2"
           />
         </div>
 
-        {/* Danh mục + Thương hiệu */}
+        {/* category + brand */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label>Danh mục</label>
             <select
               value={formData.categoryId ?? ""}
-              onChange={(e) => setFormData({ ...formData, categoryId: Number(e.target.value) })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  categoryId: Number(e.target.value),
+                })
+              }
               className="w-full border rounded px-3 py-2"
             >
               <option value="">-- Chọn --</option>
@@ -401,7 +338,9 @@ export default function ProductFormPage() {
             <label>Thương hiệu</label>
             <select
               value={formData.brandId ?? ""}
-              onChange={(e) => setFormData({ ...formData, brandId: Number(e.target.value) })}
+              onChange={(e) =>
+                setFormData({ ...formData, brandId: Number(e.target.value) })
+              }
               className="w-full border rounded px-3 py-2"
             >
               <option value="">-- Chọn --</option>
@@ -414,27 +353,29 @@ export default function ProductFormPage() {
           </div>
         </div>
 
-        {/* Ảnh sản phẩm */}
+        {/* Images */}
         <div>
-          <label className="block mb-2 font-medium">Ảnh sản phẩm</label>
+          <label className="font-medium">Ảnh sản phẩm</label>
           <input
             type="file"
-            accept="image/*"
             multiple
+            accept="image/*"
             onChange={handleFilesChange}
-            className="block w-full text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+            className="block w-full border rounded px-3 py-2 mt-1"
           />
 
-          {/* Previews: xây lại từ existingFiles + selectedFiles */}
           {(existingFiles.length > 0 || selectedFiles.length > 0) && (
-            <div className="flex flex-wrap gap-3 mt-3">{renderPreviews()}</div>
+            <div className="flex flex-wrap gap-3 mt-3">
+              {renderPreviews()}
+            </div>
           )}
         </div>
 
-        {/* Biến thể & kích cỡ */}
+        {/* variants */}
         <div className="mt-6">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold text-lg">Màu sắc / Kích cỡ</h3>
+
             <button
               type="button"
               onClick={() =>
@@ -442,7 +383,14 @@ export default function ProductFormPage() {
                   ...prev,
                   variants: [
                     ...prev.variants,
-                    { color: "", price: 0, stock: 0, sold: 0, available: true, sizes: [] },
+                    {
+                      color: "",
+                      price: 0,
+                      stock: 0,
+                      sold: 0,
+                      available: true,
+                      sizes: [],
+                    },
                   ],
                 }))
               }
@@ -464,9 +412,9 @@ export default function ProductFormPage() {
                       variants: prev.variants.filter((_, i) => i !== vIdx),
                     }))
                   }
-                  className="text-red-500 flex items-center gap-1"
+                  className="text-red-500"
                 >
-                  <FaTrash /> Xóa
+                  <FaTrash />
                 </button>
               </div>
 
@@ -481,6 +429,7 @@ export default function ProductFormPage() {
                   }}
                   className="border rounded px-3 py-2"
                 />
+
                 <input
                   type="number"
                   placeholder="Giá"
@@ -494,8 +443,10 @@ export default function ProductFormPage() {
                 />
               </div>
 
+              {/* Sizes */}
               <div className="mt-3">
                 <h4 className="font-medium">Kích cỡ</h4>
+
                 {variant.sizes.map((s, sIdx) => (
                   <div key={sIdx} className="flex gap-2 mt-2">
                     <input
@@ -508,24 +459,33 @@ export default function ProductFormPage() {
                       }}
                       className="border rounded px-3 py-2"
                     />
+
                     <input
                       type="number"
                       placeholder="Số lượng"
                       value={s.stock}
                       onChange={(e) => {
                         const updated = [...formData.variants];
-                        updated[vIdx].sizes[sIdx].stock = parseInt(e.target.value) || 0;
-                        updated[vIdx].stock = updated[vIdx].sizes.reduce((sum, s) => sum + (s.stock || 0), 0);
+                        updated[vIdx].sizes[sIdx].stock =
+                          parseInt(e.target.value) || 0;
+                        updated[vIdx].stock = updated[vIdx].sizes.reduce(
+                          (sum, s) => sum + (s.stock || 0),
+                          0
+                        );
                         setFormData({ ...formData, variants: updated });
                       }}
                       className="border rounded px-3 py-2"
                     />
+
                     <button
                       type="button"
                       onClick={() => {
                         const updated = [...formData.variants];
                         updated[vIdx].sizes.splice(sIdx, 1);
-                        updated[vIdx].stock = updated[vIdx].sizes.reduce((sum, s) => sum + (s.stock || 0), 0);
+                        updated[vIdx].stock = updated[vIdx].sizes.reduce(
+                          (sum, s) => sum + (s.stock || 0),
+                          0
+                        );
                         setFormData({ ...formData, variants: updated });
                       }}
                       className="text-red-500"
@@ -540,7 +500,10 @@ export default function ProductFormPage() {
                   onClick={() => {
                     const updated = [...formData.variants];
                     updated[vIdx].sizes.push({ size: "", stock: 0 });
-                    updated[vIdx].stock = updated[vIdx].sizes.reduce((sum, s) => sum + (s.stock || 0), 0);
+                    updated[vIdx].stock = updated[vIdx].sizes.reduce(
+                      (sum, s) => sum + (s.stock || 0),
+                      0
+                    );
                     setFormData({ ...formData, variants: updated });
                   }}
                   className="mt-2 bg-blue-500 text-white px-3 py-1 rounded flex items-center gap-1"
@@ -552,13 +515,15 @@ export default function ProductFormPage() {
           ))}
         </div>
 
-        {/* Trạng thái sản phẩm */}
+        {/* status */}
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block mb-1">Trạng thái</label>
+            <label>Trạng thái</label>
             <select
               value={formData.active ? "true" : "false"}
-              onChange={(e) => setFormData({ ...formData, active: e.target.value === "true" })}
+              onChange={(e) =>
+                setFormData({ ...formData, active: e.target.value === "true" })
+              }
               className="w-full border rounded px-3 py-2"
             >
               <option value="true">Hoạt động</option>
@@ -567,12 +532,12 @@ export default function ProductFormPage() {
           </div>
         </div>
 
-        {/* Nút hành động */}
+        {/* buttons */}
         <div className="flex justify-between mt-6">
           <button
             type="button"
             onClick={() => navigate("/product")}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700 text-sm transition"
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center gap-2"
           >
             <FaArrowLeft /> Quay lại
           </button>
@@ -580,10 +545,9 @@ export default function ProductFormPage() {
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition disabled:opacity-60"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 disabled:opacity-60"
           >
-            <FaSave />
-            {loading ? "Đang lưu..." : "Lưu"}
+            <FaSave /> {loading ? "Đang lưu..." : "Lưu"}
           </button>
         </div>
       </form>
