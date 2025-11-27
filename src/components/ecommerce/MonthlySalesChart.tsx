@@ -4,7 +4,6 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
 import { useEffect, useState } from "react";
-import axios from "axios";
 
 interface RevenueData {
   date: string; // yyyy-MM-dd
