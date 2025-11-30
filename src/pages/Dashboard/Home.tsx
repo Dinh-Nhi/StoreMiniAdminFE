@@ -1,18 +1,13 @@
-import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
-import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
 import PageMeta from "../../components/common/PageMeta";
 
 export default function Home() {
   return (
     <>
       <PageMeta title="ADMIN MINISTORE" description="ADMIN MINISTORE" />
-      <div className="grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 xl:col-span-12">
-          <EcommerceMetrics />
-        </div>
-        <div className="col-span-12 xl:col-span-12">
-          <MonthlySalesChart />
-        </div>
+      <div className="w-full flex items-center justify-center py-20">
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+          Chào mừng bạn đến với trang quản trị MiniStore!
+        </h1>
       </div>
     </>
   );
