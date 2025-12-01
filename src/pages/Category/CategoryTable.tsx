@@ -23,6 +23,7 @@ interface CategoryInfo {
   description: string;
   name: string;
   status: number;
+  isShow: boolean;
 }
 
 // 🏷️ Trạng thái hiển thị
@@ -87,7 +88,8 @@ export default function CategoryTable() {
       (item.description ?? "")
         .toLowerCase()
         .includes(searchCode.toLowerCase()) &&
-      (filterStatus === "" || item.status.toString() === filterStatus)
+      (filterStatus === "" || item.status.toString() === filterStatus) &&
+      (item.isShow === true || item.isShow === false)
   );
 
   // 📑 Phân trang
@@ -178,7 +180,7 @@ export default function CategoryTable() {
             <Table>
               <TableHeader className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <TableRow>
-                  {["Tên", "Miêu tả", "Trạng thái", "Hành động"].map(
+                  {["Tên", "Miêu tả","Hiển thị","Trạng thái","Hành động"].map(
                     (header) => (
                       <TableCell
                         key={header}
@@ -203,6 +205,9 @@ export default function CategoryTable() {
                       </TableCell>
                       <TableCell className="px-5 py-4 text-center">
                         {item.description}
+                      </TableCell>
+                      <TableCell className="px-5 py-4 text-center">
+                        {item.isShow ? <Badge size="sm" color="dark">Hiển thị</Badge> : <Badge size="sm" color="warning">Ẩn</Badge>}
                       </TableCell>
                       <TableCell className="px-5 py-4 text-center">
                         {getStatusLabel(item.status)}

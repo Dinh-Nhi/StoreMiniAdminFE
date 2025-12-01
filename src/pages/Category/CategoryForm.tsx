@@ -8,6 +8,7 @@ interface CategoryFormData {
   name: string;
   description: string;
   status: number;
+  isShow: boolean;
 }
 
 export default function CategoryForm() {
@@ -18,6 +19,7 @@ export default function CategoryForm() {
     name: "",
     description: "",
     status: 1,
+    isShow: true,
   });
   const [loading, setLoading] = useState(false);
 
@@ -34,6 +36,7 @@ export default function CategoryForm() {
             name: data.name,
             description: data.description,
             status: data.status,
+            isShow: data.isShow,
           });
         } catch (err) {
           alert("Không thể tải dữ liệu category!");
@@ -101,27 +104,51 @@ export default function CategoryForm() {
             placeholder="Nhập mô tả..."
           />
         </div>
+        {/* Trạng thái + Hiển thị */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        {/* Trạng thái */}
-        <div>
-          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-            Trạng thái
-          </label>
-          <select
-            value={formData.status}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                status: Number(e.target.value),
-              }))
-            }
-            className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500"
-          >
-            <option value={1}>Hoạt động</option>
-            <option value={0}>Tạm dừng</option>
-          </select>
+          {/* Trạng thái */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+              Trạng thái
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  status: Number(e.target.value),
+                }))
+              }
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={1}>Hoạt động</option>
+              <option value={0}>Tạm dừng</option>
+            </select>
+          </div>
+
+          {/* Hiển thị */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+              Hiển thị
+            </label>
+            <select
+              value={formData.isShow ? "true" : "false"}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  isShow: e.target.value === "true",
+                }))
+              }
+              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-800 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="true">Hiển thị</option>
+              <option value="false">Ẩn</option>
+            </select>
+          </div>
         </div>
 
+       
         {/* Nút hành động */}
         <div className="flex justify-between mt-6">
           <button
